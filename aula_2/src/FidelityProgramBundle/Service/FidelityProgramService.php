@@ -9,9 +9,9 @@ use OrderBundle\Entity\Customer;
 
 class FidelityProgramService
 {
-    private $pointsRepository;
-    private $pointsCalculator;
-    private $logger;
+    private PointsRepositoryInterface $pointsRepository;
+    private PointsCalculator $pointsCalculator;
+    private LoggerInterface $logger;
 
     public function __construct(
         PointsRepositoryInterface $pointsRepository,

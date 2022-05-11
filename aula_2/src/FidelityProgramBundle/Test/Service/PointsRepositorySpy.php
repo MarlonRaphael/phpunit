@@ -6,7 +6,7 @@ use FidelityProgramBundle\Repository\PointsRepositoryInterface;
 
 class PointsRepositorySpy implements PointsRepositoryInterface
 {
-    private $called;
+    private bool $called;
 
     public function save($points)
     {

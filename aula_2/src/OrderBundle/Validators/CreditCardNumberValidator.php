@@ -13,6 +13,6 @@ class CreditCardNumberValidator
 
     public function isValid()
     {
-        return strlen($this->value) == 16 && is_numeric($this->value);
+        return strlen($this->value) === 16 && is_numeric($this->value);
     }
 }

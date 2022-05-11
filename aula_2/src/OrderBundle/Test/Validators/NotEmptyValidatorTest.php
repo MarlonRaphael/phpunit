@@ -31,10 +31,10 @@ class NotEmptyValidatorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @return void
-     */
+//    /**
+//     * @test
+//     * @return void
+//     */
 //    public function testShouldNotBeValidWhenValueIsEmpty(): void
 //    {
 //        $dataProvider = [
@@ -51,10 +51,10 @@ class NotEmptyValidatorTest extends TestCase
 //        }
 //    }
 
-    /**
-     * @test
-     * @return void
-     */
+//    /**
+//     * @test
+//     * @return void
+//     */
 //    public function testShouldBeValidWhenValueIsNotEmpty(): void
 //    {
 //        $notEmptyValue = "foo bar";
