@@ -17,11 +17,6 @@ class GatewayTest extends TestCase
     public function shouldNotPayWhenAuthenticationFail(): void
     {
         $httpClient = $this->createMock(HttpClientInterface::class);
-        $httpClient
-            ->method('send')
-            ->will($this->returnCallback(function ($method, $address, $body) {
-                $this->fakeHttpClientSend($method, $address, $body);
-            }));
 
         $logger = $this->createMock(LoggerInterface::class);
 
@@ -29,11 +24,29 @@ class GatewayTest extends TestCase
         $password = 'invalid-password';
         $gateway = new Gateway($httpClient, $logger, $user, $password);
 
-        $paid = $gateway->pay(
-            'Marlon Raphael',
-            5555444488882222,
-            new DateTime('now'),
-            100);
+        $name = 'Marlon Raphael';
+        $creditCardNumber = 5555444488882222;
+        $validity = new DateTime('now');
+        $value = 100;
+
+        $map = [
+            [
+                'POST',
+                Gateway::BASE_URL . 'authenticate',
+                [
+                    'user' => $user,
+                    'password' => $password
+                ],
+                null
+            ]
+        ];
+
+        $httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->will($this->returnValueMap($map));
+
+        $paid = $gateway->pay($name,  $creditCardNumber, $validity, $value);
 
         $this->assertEquals(false, $paid);
     }
@@ -45,11 +58,6 @@ class GatewayTest extends TestCase
     public function shouldNotPayWhenFailOnGateway(): void
     {
         $httpClient = $this->createMock(HttpClientInterface::class);
-        $httpClient
-            ->method('send')
-            ->will($this->returnCallback(function ($method, $address, $body) {
-                $this->fakeHttpClientSend($method, $address, $body);
-            }));
 
         $logger = $this->createMock(LoggerInterface::class);
 
@@ -57,14 +65,46 @@ class GatewayTest extends TestCase
         $password = 'valid-password';
         $gateway = new Gateway($httpClient, $logger, $user, $password);
 
-        $paid = $gateway->pay(
-            'Marlon Raphael',
-            5555444488882222,
-            new DateTime('now'),
-            100);
+        $name = 'Marlon Raphael';
+        $creditCardNumber = 5555444488882222;
+        $value = 100;
+        $token = 'meu-token';
+        $validity = new DateTime('now');
+
+        $map = [
+            [
+                'POST',
+                Gateway::BASE_URL . '/authenticate',
+                [
+                    'user' => $user,
+                    'password' => $password
+                ],
+                $token
+            ],
+            [
+                'POST',
+                Gateway::BASE_URL . '/pay',
+                [
+                    'name' => $name,
+                    'credit_card_number' => $creditCardNumber,
+                    'validity' => $validity,
+                    'value' => $value,
+                    'token' => $token
+                ],
+                ['paid' => false]
+            ],
+        ];
+
+        $httpClient
+            ->expects($this->atLeast(2))
+            ->method('send')
+            ->will($this->returnValueMap($map));
+
+        $paid = $gateway->pay($name, $creditCardNumber, $validity, $value);
 
         $this->assertEquals(false, $paid);
     }
+
 
     /**
      * @test
@@ -73,11 +113,6 @@ class GatewayTest extends TestCase
     public function shouldSuccessfullyPayWhenGatewayReturnOk(): void
     {
         $httpClient = $this->createMock(HttpClientInterface::class);
-        $httpClient
-            ->method('send')
-            ->will($this->returnCallback(function ($method, $address, $body) {
-                $this->fakeHttpClientSend($method, $address, $body);
-            }));
 
         $logger = $this->createMock(LoggerInterface::class);
 
@@ -85,44 +120,43 @@ class GatewayTest extends TestCase
         $password = 'valid-password';
         $gateway = new Gateway($httpClient, $logger, $user, $password);
 
-        $paid = $gateway->pay(
-            'Marlon Raphael',
-            9999999999999999,
-            new DateTime('now'),
-            100);
+        $name = 'Marlon Raphael';
+        $creditCardNumber = 9999999999999999;
+        $validity = new DateTime('now');
+        $value = 100;
+        $token = 'meu-token';
+
+        $map = [
+            [
+                'POST',
+                Gateway::BASE_URL . '/authenticate',
+                [
+                    'user' => $user,
+                    'password' => $password
+                ],
+                $token
+            ],
+            [
+                'POST',
+                Gateway::BASE_URL . '/pay',
+                [
+                    'name' => $name,
+                    'credit_card_number' => $creditCardNumber,
+                    'validity' => $validity,
+                    'value' => $value,
+                    'token' => $token
+                ],
+                ['paid' => true]
+            ],
+        ];
+
+        $httpClient
+            ->expects($this->atLeast(2))
+            ->method('send')
+            ->will($this->returnValueMap($map));
+
+        $paid = $gateway->pay($name, $creditCardNumber, $validity, $value);
 
         $this->assertEquals(true, $paid);
-    }
-
-    /**
-     * @param $method
-     * @param $address
-     * @param $body
-     * @return bool[]|false[]|string|void|null
-     */
-    public function fakeHttpClientSend($method, $address, $body)
-    {
-        var_dump($body);
-
-        switch ($address) {
-            case Gateway::BASE_URL . '/authenticate':
-
-                if ($body['password'] !== 'valid-password') {
-                    return null;
-                }
-
-                return 'meu-token';
-
-                break;
-            case Gateway::BASE_URL . '/pay':
-
-                if ($body['credit_card_number'] === 9999999999999999) {
-                    return ['paid' => true];
-                }
-
-                return ['paid' => false];
-
-                break;
-        }
     }
 }
