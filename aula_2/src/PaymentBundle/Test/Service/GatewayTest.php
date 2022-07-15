@@ -65,43 +65,31 @@ class GatewayTest extends TestCase
         $password = 'valid-password';
         $gateway = new Gateway($httpClient, $logger, $user, $password);
 
+        $token = 'meu-token';
+
+        $httpClient
+            ->expects($this->at(0))
+            ->method('send')
+            ->willReturn($token);
+
+        $logger
+            ->expects($this->once())
+            ->method('log')
+            ->with('Payment failed');
+
         $name = 'Marlon Raphael';
         $creditCardNumber = 5555444488882222;
         $value = 100;
-        $token = 'meu-token';
         $validity = new DateTime('now');
 
-        $map = [
-            [
-                'POST',
-                Gateway::BASE_URL . '/authenticate',
-                [
-                    'user' => $user,
-                    'password' => $password
-                ],
-                $token
-            ],
-            [
-                'POST',
-                Gateway::BASE_URL . '/pay',
-                [
-                    'name' => $name,
-                    'credit_card_number' => $creditCardNumber,
-                    'validity' => $validity,
-                    'value' => $value,
-                    'token' => $token
-                ],
-                ['paid' => false]
-            ],
-        ];
-
         $httpClient
-            ->expects($this->atLeast(2))
+            ->expects($this->at(1))
             ->method('send')
-            ->will($this->returnValueMap($map));
+            ->willReturn(['paid' => false]);
 
         $paid = $gateway->pay($name, $creditCardNumber, $validity, $value);
 
+//        $this->assertEquals(false, true, 'Payment supposed to fail and return false');
         $this->assertEquals(false, $paid);
     }
 
