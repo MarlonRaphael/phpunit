@@ -18,12 +18,14 @@ class CustomerCategoryService
         $this->categories[] = $category;
     }
 
-    public function getUsageCategory(Customer $customer)
+    public function getUsageCategory(Customer $customer): string
     {
         foreach ($this->categories as $category) {
             if ($category->isEligible($customer)) {
                 return $category->getCategoryName();
             }
         }
+
+        return self::CATEGORY_NEW_USER;
     }
 }
